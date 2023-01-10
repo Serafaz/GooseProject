@@ -6,9 +6,10 @@ import os
 
 FPS = 120
 pygame.init()
-size = width, height = 800, 600
+size = width, height = 800, 700
 screen = pygame.display.set_mode(size)
 all_sprites = pygame.sprite.Group()
+tiles_group = pygame.sprite.Group()
 network_sprites = pygame.sprite.Group()
 pygame.mixer.music.load('data/sound.mp3')
 color_button = 'white'
@@ -38,6 +39,22 @@ def load_image(name, colorkey=None, reverse=False, size_image=None):
             colorkey = image.get_at((0, 0))
         image.set_colorkey(colorkey)
     return image
+
+
+tile_images = {
+    'platform': load_image('platform_tile.jpg', None, False, (50, 50)),
+    'background-tile': load_image('background_tile.jpg', None, False, (50, 50))
+}
+
+tile_width = tile_height = 50
+
+
+class Tile(pygame.sprite.Sprite):
+    def __init__(self, tile_type, pos_x, pos_y):
+        super().__init__(tiles_group, all_sprites)
+        self.image = tile_images[tile_type]
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x, tile_height * pos_y)
 
 
 class MusicButton(pygame.sprite.Sprite):
@@ -72,7 +89,7 @@ class MainHero(pygame.sprite.Sprite):
 
 def load_menu():
     pygame.init()
-    size_menu = width_menu, height_menu = 600, 600
+    size_menu = width_menu, height_menu = 600, 700
     menu_screen = pygame.display.set_mode(size_menu)
     background = pygame.image.load("data/background.jpg")
     menu_screen.blit(background, (0, 0))
@@ -148,23 +165,45 @@ def pause(screen):
         pygame.display.flip()
 
 
+def generate_level(level):
+    x, y = None, None
+    for y in range(len(level)):
+        for x in range(len(level[y])):
+            if level[y][x] == '.':
+                Tile('background-tile', x, y)
+            elif level[y][x] == '#':
+                Tile('platform', x, y)
+            elif level[y][x] == '@':
+                Tile('background-tile', x, y)
+    return x, y
+
+
+def load_level(filename):
+    filename = "data/" + filename
+    with open(filename, 'r') as mapFile:
+        level_map = [line.strip() for line in mapFile]
+    max_width = max(map(len, level_map))
+    return list(map(lambda x: x.ljust(max_width, '.'), level_map))
+
+
 if __name__ == '__main__':
     clock = pygame.time.Clock()
-    rect_hero = pygame.Rect(400, 350, 30, 30)
-    speed = 10
+    rect_hero = pygame.Rect(400, 550, 70, 70)
+    speed = 5
     jump = False
     jump_count = 0
-    jump_max = 15
+    jump_max = 20
+    level_x, level_y = generate_level(load_level('level1.txt'))
     main_hero = MainHero(0, 0)
     all_sprites.add(main_hero)
     running = True
     running_menu = True
     pause_mode = False
     load_menu()
+    pygame.display.set_caption('Гусь-Стеночник')
     load_music()
     while running:
         clock.tick(FPS)
-        screen.fill((0, 0, 255))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 terminate()
@@ -197,7 +236,5 @@ if __name__ == '__main__':
                 else:
                     jump = False
             all_sprites.update(rect_hero.x, rect_hero.y, reverse_hero)
-            pygame.draw.rect(screen, pygame.Color('brown'), (0, 435, 800, 600))
             all_sprites.draw(screen)
             pygame.display.flip()
-
