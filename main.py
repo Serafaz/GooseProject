@@ -1,20 +1,59 @@
 import pygame
 import pygame_gui
-import pytmx
+import time
 import sys
 import os
 
 FPS = 120
 pygame.init()
-size = width, height = 800, 700
+size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
 all_sprites = pygame.sprite.Group()
 tiles_group = pygame.sprite.Group()
+platforms_group = pygame.sprite.Group()
 network_sprites = pygame.sprite.Group()
 pygame.mixer.music.load('data/sound.mp3')
 color_button = 'white'
 playing_music = True
+platforms_arr = []
+G = 0.04
+start = time.time()
+rect_hero = pygame.Rect(400, 350, 30, 30)
+reverse_hero = 1
 need_to_load_menu = False
+
+
+class Camera:
+    # зададим начальный сдвиг камеры
+    def __init__(self):
+        self.dx = 0
+        self.dy = 0
+
+    # сдвинуть объект obj на смещение камеры
+    def apply(self, obj):
+        obj.rect.x += self.dx
+        obj.rect.y += self.dy
+
+    # позиционировать камеру на объекте target
+    def update(self, target):
+        self.dx = -(target.rect.x + target.rect.w // 2 - width // 2)
+        self.dy = -(target.rect.y + target.rect.h // 2 - height // 2)
+
+
+def update_event(last_event, start):
+    global rect_hero, reverse_hero
+    end = time.time()
+    if last_event is not None and rect_hero is not None:
+        if last_event.type == pygame.MOUSEBUTTONDOWN and end - start < 1:
+            screen.fill((0, 0, 0))
+            if reverse_hero == 1:
+                rect_hero.x += 1
+            else:
+                rect_hero.x -= 1
+            rect_hero.y -= 1
+        if last_event.type == pygame.MOUSEBUTTONDOWN and end - start > 1.5:
+            start = time.time()
+            falling(rect_hero)
 
 
 def load_music():
@@ -57,6 +96,14 @@ class Tile(pygame.sprite.Sprite):
             tile_width * pos_x, tile_height * pos_y)
 
 
+class Platform(pygame.sprite.Sprite):
+    def __init__(self, pos_x, pos_y):
+        super().__init__(platforms_group)
+        self.image = tile_images['platform']
+        self.rect = self.image.get_rect().move(
+            tile_width * pos_x - 15, tile_height * pos_y - 15)
+
+
 class MusicButton(pygame.sprite.Sprite):
     image = load_image('music_image.png')
 
@@ -89,7 +136,7 @@ class MainHero(pygame.sprite.Sprite):
 
 def load_menu():
     pygame.init()
-    size_menu = width_menu, height_menu = 600, 700
+    size_menu = width_menu, height_menu = 600, 600
     menu_screen = pygame.display.set_mode(size_menu)
     background = pygame.image.load("data/background.jpg")
     menu_screen.blit(background, (0, 0))
@@ -103,8 +150,25 @@ def load_menu():
             if menu_event.type == pygame.QUIT:
                 terminate()
             elif menu_event.type == pygame.MOUSEBUTTONDOWN:
-                return
+                main_game()
         pygame.display.flip()
+
+
+def lose_screen():
+    lose_image = load_image('lose_screen.png', None, False, (600, 600))
+    running = True
+    screen.blit(lose_image, (0, 0))
+    text = pygame.font.Font(None, 50)
+    rendered_text = text.render('CLICK <<R>> TO TRY AGAIN', True, (255, 255, 255))
+    place = rendered_text.get_rect(center=(300, 500))
+    screen.blit(rendered_text, place)
+    pygame.display.flip()
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_r:
+                load_menu()
 
 
 def terminate():
@@ -165,6 +229,10 @@ def pause(screen):
         pygame.display.flip()
 
 
+def get_collide(rect_hero):
+    return False
+
+
 def generate_level(level):
     x, y = None, None
     for y in range(len(level)):
@@ -172,6 +240,7 @@ def generate_level(level):
             if level[y][x] == '.':
                 Tile('background-tile', x, y)
             elif level[y][x] == '#':
+                Platform(x, y)
                 Tile('platform', x, y)
             elif level[y][x] == '@':
                 Tile('background-tile', x, y)
@@ -186,25 +255,50 @@ def load_level(filename):
     return list(map(lambda x: x.ljust(max_width, '.'), level_map))
 
 
-if __name__ == '__main__':
+def falling(rect_hero):
+    rate_of_fall = 0.01
+    while not get_collide(rect_hero):
+        if reverse_hero == 1:
+            rect_hero.x -= 1
+            rect_hero.y += rate_of_fall
+        else:
+            rect_hero.x += 1
+            rect_hero.y += rate_of_fall
+        if rect_hero.y > 570:
+            lose_screen()
+        rate_of_fall += 0.01
+        all_sprites.update(rect_hero.x, rect_hero.y, reverse_hero)
+        all_sprites.draw(screen)
+        pygame.display.flip()
+
+
+def main_game():
+    camera = Camera()
+    global need_to_load_menu, rect_hero, reverse_hero
     clock = pygame.time.Clock()
-    rect_hero = pygame.Rect(400, 550, 70, 70)
-    speed = 5
-    jump = False
-    jump_count = 0
-    jump_max = 20
+    reverse_hero = 1
+    rect_hero = pygame.Rect(400, 350, 30, 30)
     level_x, level_y = generate_level(load_level('level1.txt'))
     main_hero = MainHero(0, 0)
     all_sprites.add(main_hero)
     running = True
-    running_menu = True
     pause_mode = False
-    load_menu()
-    pygame.display.set_caption('Гусь-Стеночник')
     load_music()
+    start = time.time()
+    last_event = None
     while running:
         clock.tick(FPS)
+        screen.fill((0, 0, 255))
         for event in pygame.event.get():
+            if last_event is not None and event.type == pygame.MOUSEBUTTONUP and \
+                    last_event.type != pygame.MOUSEBUTTONUP:
+                start = time.time()
+                if reverse_hero == 2:
+                    reverse_hero = 1
+                else:
+                    reverse_hero = 2
+                falling(rect_hero)
+            last_event = event
             if event.type == pygame.QUIT:
                 terminate()
             if event.type == pygame.KEYDOWN:
@@ -217,24 +311,11 @@ if __name__ == '__main__':
                         if need_to_load_menu:
                             need_to_load_menu = False
                             load_menu()
-                if not jump and event.key == pygame.K_SPACE:
-                    jump = True
-                    jump_count = jump_max
-        pressed_keys = pygame.key.get_pressed()
-        reverse_hero = 0
-        if pressed_keys[pygame.K_a]:
-            reverse_hero = 1
-        elif pressed_keys[pygame.K_d]:
-            reverse_hero = 2
+        update_event(last_event, start)
         if not pause_mode:
-            rect_hero.centerx = (rect_hero.centerx + (pressed_keys[pygame.K_d] -
-                                                      pressed_keys[pygame.K_a]) * speed) % 800
-            if jump:
-                rect_hero.y -= jump_count
-                if jump_count > -jump_max:
-                    jump_count -= 1
-                else:
-                    jump = False
             all_sprites.update(rect_hero.x, rect_hero.y, reverse_hero)
             all_sprites.draw(screen)
             pygame.display.flip()
+
+
+load_menu()
