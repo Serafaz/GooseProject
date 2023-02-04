@@ -176,6 +176,42 @@ def terminate():
     sys.exit()
 
 
+def shop(screen):
+    global need_to_load_menu, shop_mode
+    manager = pygame_gui.UIManager((800, 600))
+    exit_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((500, 500), (50, 100)),
+        text='',
+        manager=manager
+    )
+    exit_image = load_image('exit_image.png', None, False, (300, 300))
+    pygame.draw.rect(screen, (0, 0, 0), (0, 0, 600, 600))
+    font = pygame.font.Font(None, 100)
+    shop_text = font.render('Магазин', True, (255, 255, 255))
+    text_place = shop_text.get_rect(center=(300, 50))
+    screen.blit(shop_text, text_place)
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.USEREVENT:
+                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == exit_button:
+                        shop_mode = False
+                        need_to_load_menu = True
+                        return
+            if event.type == pygame.KEYDOWN:
+                pause_pressed_keys = pygame.key.get_pressed()
+                if pause_pressed_keys[pygame.K_ESCAPE]:
+                    shop_mode = False
+                    return
+            elif event.type == pygame.QUIT:
+                terminate()
+            manager.process_events(event)
+        manager.update(FPS)
+        manager.draw_ui(screen)
+        screen.blit(exit_image, (380, 400))
+        pygame.display.flip()
+
+
 def pause(screen):
     global playing_music, pause_mode, need_to_load_menu
     manager = pygame_gui.UIManager((800, 600))
@@ -283,6 +319,7 @@ def main_game():
     all_sprites.add(main_hero)
     running = True
     pause_mode = False
+    shop_mode = False
     load_music()
     start = time.time()
     last_event = None
@@ -311,8 +348,21 @@ def main_game():
                         if need_to_load_menu:
                             need_to_load_menu = False
                             load_menu()
+                if event.key == pygame.K_m:
+                    if shop_mode:
+                        shop_mode = False
+                    else:
+                        shop_mode = True
+                        shop(screen)
+                        if need_to_load_menu:
+                            need_to_load_menu = False
+                            load_menu()
         update_event(last_event, start)
         if not pause_mode:
+            all_sprites.update(rect_hero.x, rect_hero.y, reverse_hero)
+            all_sprites.draw(screen)
+            pygame.display.flip()
+        if not shop_mode:
             all_sprites.update(rect_hero.x, rect_hero.y, reverse_hero)
             all_sprites.draw(screen)
             pygame.display.flip()
