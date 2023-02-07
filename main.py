@@ -5,6 +5,7 @@ import sys
 import os
 
 FPS = 120
+MONEY = 155
 pygame.init()
 size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
@@ -21,6 +22,7 @@ start = time.time()
 rect_hero = pygame.Rect(400, 350, 30, 30)
 reverse_hero = 1
 need_to_load_menu = False
+
 
 
 class Camera:
@@ -177,14 +179,32 @@ def terminate():
 
 
 def shop(screen):
-    global need_to_load_menu, shop_mode
+    global need_to_load_menu, shop_mode, first_skin_bought, second_skin_bought, MONEY
+    shop_mode, first_skin_bought, second_skin_bought = False, False, False
     manager = pygame_gui.UIManager((800, 600))
     exit_button = pygame_gui.elements.UIButton(
         relative_rect=pygame.Rect((500, 500), (50, 100)),
         text='',
         manager=manager
     )
+    buy_first_skin_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((50, 100), (100, 100)),
+        text='',
+        manager=manager
+    )
+    buy_second_skin_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((200, 100), (100, 100)),
+        text='',
+        manager=manager
+    )
+    buy_third_skin_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((350, 100), (100, 100)),
+        text='',
+        manager=manager
+    )
     exit_image = load_image('exit_image.png', None, False, (300, 300))
+    first_skin = load_image('original.png', None, False, (125, 125))
+    second_skin = load_image('ghoul.png', None, False, (200, 200))
     pygame.draw.rect(screen, (0, 0, 0), (0, 0, 600, 600))
     font = pygame.font.Font(None, 100)
     shop_text = font.render('Магазин', True, (255, 255, 255))
@@ -198,6 +218,30 @@ def shop(screen):
                         shop_mode = False
                         need_to_load_menu = True
                         return
+                    if event.ui_element == buy_first_skin_button:
+                        if not first_skin_bought:
+                            if MONEY > 99:
+                                MONEY -= 100
+                                first_skin_bought = True
+                                buy_text = font.render('Куплено!', True, (0, 255, 0))
+                                text_place = buy_text.get_rect(center=(300, 300))
+                                screen.blit(buy_text, text_place)
+                            else:
+                                buy_text = font.render('Мало средств!', True, (255, 0, 0))
+                                text_place = buy_text.get_rect(center=(300, 300))
+                                screen.blit(buy_text, text_place)
+                    if event.ui_element == buy_second_skin_button:
+                        if not second_skin_bought:
+                            if MONEY > 99:
+                                MONEY -= 100
+                                second_skin_bought = True
+                                buy_text = font.render('Куплено!', True, (0, 255, 0))
+                                text_place = buy_text.get_rect(center=(300, 300))
+                                screen.blit(buy_text, text_place)
+                            else:
+                                buy_text = font.render('Мало средств!', True, (255, 0, 0))
+                                text_place = buy_text.get_rect(center=(300, 300))
+                                screen.blit(buy_text, text_place)
             if event.type == pygame.KEYDOWN:
                 pause_pressed_keys = pygame.key.get_pressed()
                 if pause_pressed_keys[pygame.K_ESCAPE]:
@@ -209,6 +253,8 @@ def shop(screen):
         manager.update(FPS)
         manager.draw_ui(screen)
         screen.blit(exit_image, (380, 400))
+        screen.blit(first_skin, (40, 80))
+        screen.blit(second_skin, (185, 35))
         pygame.display.flip()
 
 
