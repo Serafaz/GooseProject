@@ -205,11 +205,17 @@ def shop(screen):
     exit_image = load_image('exit_image.png', None, False, (300, 300))
     first_skin = load_image('original.png', None, False, (125, 125))
     second_skin = load_image('ghoul.png', None, False, (200, 200))
+    coin_image = load_image('coin.gif', None, False, (50, 50))
     pygame.draw.rect(screen, (0, 0, 0), (0, 0, 600, 600))
-    font = pygame.font.Font(None, 100)
+    font = pygame.font.SysFont('Calibri', 79)
+    font_text = pygame.font.Font(None, 50)
     shop_text = font.render('Магазин', True, (255, 255, 255))
-    text_place = shop_text.get_rect(center=(300, 50))
+    text_place = shop_text.get_rect(center=(200, 50))
     screen.blit(shop_text, text_place)
+    money_text = font_text.render(f'{MONEY}', True, (255, 255, 255))
+    text_place = money_text.get_rect(center=(530, 60))
+    screen.blit(money_text, text_place)
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.USEREVENT:
@@ -224,12 +230,15 @@ def shop(screen):
                                 MONEY -= 100
                                 first_skin_bought = True
                                 buy_text = font.render('Куплено!', True, (0, 255, 0))
-                                text_place = buy_text.get_rect(center=(300, 300))
-                                screen.blit(buy_text, text_place)
+                                buy_text_place = buy_text.get_rect(center=(300, 300))
+                                screen.blit(buy_text, buy_text_place)
                             else:
                                 buy_text = font.render('Мало средств!', True, (255, 0, 0))
-                                text_place = buy_text.get_rect(center=(300, 300))
-                                screen.blit(buy_text, text_place)
+                                buy_text_place = buy_text.get_rect(center=(300, 300))
+                                screen.blit(buy_text, buy_text_place)
+                        buy_text = font.render('', True, (0, 255, 0))
+                        buy_text_place = buy_text.get_rect(center=(300, 300))
+                        screen.blit(buy_text, buy_text_place)
                     if event.ui_element == buy_second_skin_button:
                         if not second_skin_bought:
                             if MONEY > 99:
@@ -242,6 +251,9 @@ def shop(screen):
                                 buy_text = font.render('Мало средств!', True, (255, 0, 0))
                                 text_place = buy_text.get_rect(center=(300, 300))
                                 screen.blit(buy_text, text_place)
+                        buy_text = font.render('', True, (0, 255, 0))
+                        buy_text_place = buy_text.get_rect(center=(300, 300))
+                        screen.blit(buy_text, buy_text_place)
             if event.type == pygame.KEYDOWN:
                 pause_pressed_keys = pygame.key.get_pressed()
                 if pause_pressed_keys[pygame.K_ESCAPE]:
@@ -250,11 +262,13 @@ def shop(screen):
             elif event.type == pygame.QUIT:
                 terminate()
             manager.process_events(event)
+
         manager.update(FPS)
         manager.draw_ui(screen)
         screen.blit(exit_image, (380, 400))
         screen.blit(first_skin, (40, 80))
         screen.blit(second_skin, (185, 35))
+        screen.blit(coin_image, (500, 100))
         pygame.display.flip()
 
 
