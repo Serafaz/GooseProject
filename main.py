@@ -5,7 +5,7 @@ import sys
 import os
 
 FPS = 120
-MONEY = 155
+MONEY = 101
 pygame.init()
 size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
@@ -22,7 +22,6 @@ start = time.time()
 rect_hero = pygame.Rect(400, 350, 30, 30)
 reverse_hero = 1
 need_to_load_menu = False
-
 
 
 class Camera:
@@ -226,9 +225,10 @@ def shop(screen):
                         return
                     if event.ui_element == buy_first_skin_button:
                         if not first_skin_bought:
+                            pygame.draw.rect(screen, (0, 0, 0), (1, 200, 600, 400))
                             if MONEY > 99:
                                 MONEY -= 100
-                                first_skin_bought = True
+                                first_skin_bought = False
                                 buy_text = font.render('Куплено!', True, (0, 255, 0))
                                 buy_text_place = buy_text.get_rect(center=(300, 300))
                                 screen.blit(buy_text, buy_text_place)
@@ -236,27 +236,30 @@ def shop(screen):
                                 buy_text = font.render('Мало средств!', True, (255, 0, 0))
                                 buy_text_place = buy_text.get_rect(center=(300, 300))
                                 screen.blit(buy_text, buy_text_place)
-                        buy_text = font.render('', True, (0, 255, 0))
-                        buy_text_place = buy_text.get_rect(center=(300, 300))
-                        screen.blit(buy_text, buy_text_place)
                     if event.ui_element == buy_second_skin_button:
                         if not second_skin_bought:
-                            if MONEY > 99:
+                            pygame.draw.rect(screen, (0, 0, 0), (1, 200, 600, 400))
+                            if MONEY > 159:
                                 MONEY -= 100
-                                second_skin_bought = True
+                                second_skin_bought = False
                                 buy_text = font.render('Куплено!', True, (0, 255, 0))
-                                text_place = buy_text.get_rect(center=(300, 300))
-                                screen.blit(buy_text, text_place)
+                                buy_text_place = buy_text.get_rect(center=(300, 300))
+                                screen.blit(buy_text, buy_text_place)
                             else:
                                 buy_text = font.render('Мало средств!', True, (255, 0, 0))
-                                text_place = buy_text.get_rect(center=(300, 300))
-                                screen.blit(buy_text, text_place)
-                        buy_text = font.render('', True, (0, 255, 0))
-                        buy_text_place = buy_text.get_rect(center=(300, 300))
-                        screen.blit(buy_text, buy_text_place)
+                                buy_text_place = buy_text.get_rect(center=(300, 300))
+                                screen.blit(buy_text, buy_text_place)
+                    pygame.draw.rect(screen, (0, 0, 0), (400, 0, 500, 100))
+                    money_text = font_text.render(f'{MONEY}', True, (255, 255, 255))
+                    text_place = money_text.get_rect(center=(530, 60))
+                    screen.blit(money_text, text_place)
+                    buy_text = font.render('', True, (0, 255, 0))
+                    buy_text_place = buy_text.get_rect(center=(300, 300))
+                    screen.blit(buy_text, buy_text_place)
+                    pygame.display.flip()
             if event.type == pygame.KEYDOWN:
-                pause_pressed_keys = pygame.key.get_pressed()
-                if pause_pressed_keys[pygame.K_ESCAPE]:
+                shop_pressed_keys = pygame.key.get_pressed()
+                if shop_pressed_keys[pygame.K_m]:
                     shop_mode = False
                     return
             elif event.type == pygame.QUIT:
