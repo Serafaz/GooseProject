@@ -6,6 +6,8 @@ import os
 
 FPS = 120
 MONEY = 560
+FIRST_SKIN_BOUGHT, SECOND_SKIN_BOUGHT, THIRD_SKIN_BOUGHT = False, False, False
+FIRTH_SKIN_BOUGHT, FIFTH_SKIN_BOUGHT = False, False
 pygame.init()
 size = width, height = 800, 600
 screen = pygame.display.set_mode(size)
@@ -136,22 +138,42 @@ class MainHero(pygame.sprite.Sprite):
 
 
 def load_menu():
+    global inventory_mode
+    inventory_mode = False
     pygame.init()
     size_menu = width_menu, height_menu = 600, 600
     menu_screen = pygame.display.set_mode(size_menu)
     background = pygame.image.load("data/background.jpg")
     menu_screen.blit(background, (0, 0))
+    manager = pygame_gui.UIManager((800, 600))
+    inventory_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((5, 475), (100, 100)),
+        text='',
+        manager=manager
+    )
+    inventory_image = load_image('inventory_pic.png', None, False, (100, 100))
     pygame.display.flip()
     pygame.display.set_caption('Гусь-Стеночник. Меню')
     playing_font = load_image('font.png', None, False, (600, 400))
     menu_screen.blit(playing_font, (50, 0))
     pygame.display.flip()
     while True:
-        for menu_event in pygame.event.get():
-            if menu_event.type == pygame.QUIT:
+        for event in pygame.event.get():
+            if event.type == pygame.USEREVENT:
+                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == inventory_button:
+                        inventory(screen)
+            elif event.type == pygame.QUIT:
                 terminate()
-            elif menu_event.type == pygame.MOUSEBUTTONDOWN:
-                main_game()
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                if (pygame.mouse.get_pos()[0] not in range(5, 100)) or \
+                        (pygame.mouse.get_pos()[0] in range(5, 100) and
+                         pygame.mouse.get_pos()[1] < 475):
+                    main_game()
+        manager.update(FPS)
+        manager.draw_ui(screen)
+        pygame.draw.circle(screen, (255, 255, 255), center=(55, 525), radius=50)
+        screen.blit(inventory_image, (5, 470))
         pygame.display.flip()
 
 
@@ -178,8 +200,8 @@ def terminate():
 
 
 def shop(screen):
-    global need_to_load_menu, shop_mode, first_skin_bought, second_skin_bought, \
-        MONEY, third_skin_bought, firth_skin_bought, fifth_skin_bought
+    global need_to_load_menu, shop_mode, FIRST_SKIN_BOUGHT, SECOND_SKIN_BOUGHT, \
+        THIRD_SKIN_BOUGHT, FIRTH_SKIN_BOUGHT, FIFTH_SKIN_BOUGHT, MONEY
     shop_mode, first_skin_bought, second_skin_bought, = False, False, False
     third_skin_bought, firth_skin_bought, fifth_skin_bought = False, False, False
     manager = pygame_gui.UIManager((800, 600))
@@ -245,6 +267,7 @@ def shop(screen):
                             if MONEY > 99:
                                 MONEY -= 100
                                 first_skin_bought = True
+                                FIRST_SKIN_BOUGHT = True
                                 buy_text = font_buy.render('Куплено!', True, (0, 255, 0))
                                 buy_text_place = buy_text.get_rect(center=(100, 450))
                                 screen.blit(buy_text, buy_text_place)
@@ -258,6 +281,7 @@ def shop(screen):
                             if MONEY > 159:
                                 MONEY -= 160
                                 second_skin_bought = True
+                                SECOND_SKIN_BOUGHT = True
                                 buy_text = font_buy.render('Куплено!', True, (0, 255, 0))
                                 buy_text_place = buy_text.get_rect(center=(100, 450))
                                 screen.blit(buy_text, buy_text_place)
@@ -271,6 +295,7 @@ def shop(screen):
                             if MONEY > 199:
                                 MONEY -= 200
                                 third_skin_bought = True
+                                THIRD_SKIN_BOUGHT = True
                                 buy_text = font_buy.render('Куплено!', True, (0, 255, 0))
                                 buy_text_place = buy_text.get_rect(center=(100, 450))
                                 screen.blit(buy_text, buy_text_place)
@@ -284,11 +309,12 @@ def shop(screen):
                             if MONEY > 249:
                                 MONEY -= 250
                                 firth_skin_bought = True
+                                FIRTH_SKIN_BOUGHT = True
                                 buy_text = font_buy.render('Куплено!', True, (0, 255, 0))
                                 buy_text_place = buy_text.get_rect(center=(100, 450))
                                 screen.blit(buy_text, buy_text_place)
                             else:
-                                buy_text = font.render('Мало средств!', True, (255, 0, 0))
+                                buy_text = font_buy.render('Мало средств!', True, (255, 0, 0))
                                 buy_text_place = buy_text.get_rect(center=(100, 450))
                                 screen.blit(buy_text, buy_text_place)
                     if event.ui_element == buy_fifth_skin_button:
@@ -297,6 +323,7 @@ def shop(screen):
                             if MONEY > 299:
                                 MONEY -= 300
                                 fifth_skin_bought = True
+                                FIFTH_SKIN_BOUGHT = True
                                 buy_text = font_buy.render('Куплено!', True, (0, 255, 0))
                                 buy_text_place = buy_text.get_rect(center=(100, 450))
                                 screen.blit(buy_text, buy_text_place)
@@ -343,6 +370,148 @@ def shop(screen):
         screen.blit(first_skin, (40, 80))
         screen.blit(second_skin, (185, 35))
         screen.blit(coin_image, (500, 100))
+        screen.blit(third_skin, (330, 40))
+        screen.blit(firth_skin, (30, 180))
+        screen.blit(fifth_skin, (180, 180))
+        pygame.display.flip()
+
+
+def inventory(screen):
+    global FIRST_SKIN_BOUGHT, SECOND_SKIN_BOUGHT, THIRD_SKIN_BOUGHT, \
+        FIRTH_SKIN_BOUGHT, FIFTH_SKIN_BOUGHT, inventory_mode, need_to_load_menu
+    inventory_mode, need_to_load_menu = False, False
+    manager = pygame_gui.UIManager((800, 600))
+    exit_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((500, 500), (50, 100)),
+        text='',
+        manager=manager
+    )
+    pick_first_skin_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((50, 100), (100, 100)),
+        text='',
+        manager=manager
+    )
+    pick_second_skin_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((200, 100), (100, 100)),
+        text='',
+        manager=manager
+    )
+    pick_third_skin_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((350, 100), (100, 100)),
+        text='',
+        manager=manager
+    )
+    pick_firth_skin_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((50, 250), (100, 100)),
+        text='',
+        manager=manager
+    )
+    pick_fifth_skin_button = pygame_gui.elements.UIButton(
+        relative_rect=pygame.Rect((200, 250), (100, 100)),
+        text='',
+        manager=manager
+    )
+
+    exit_image = load_image('exit_image.png', None, False, (300, 300))
+    first_skin = load_image('original.png', None, False, (125, 125))
+    second_skin = load_image('ghoul.png', None, False, (200, 200))
+    third_skin = load_image('goose_mag.png', None, False, (200, 200))
+    firth_skin = load_image('purple_goose.png', None, False, (200, 200))
+    fifth_skin = load_image('cyber_goose.png', None, False, (200, 200))
+    font_pick = pygame.font.SysFont(None, 20)
+    array_with_flags = [FIRST_SKIN_BOUGHT, SECOND_SKIN_BOUGHT, THIRD_SKIN_BOUGHT,
+                        FIRTH_SKIN_BOUGHT, FIFTH_SKIN_BOUGHT]
+    array_with_names = [first_skin, second_skin, third_skin,  firth_skin,
+                        fifth_skin]
+    pos_for_flags = [(40, 80), (185, 35), (330, 40), (30, 180), (180, 180)]
+    for i in range(len(array_with_flags)):
+        if array_with_flags[i] is True:
+            screen.blit(array_with_names[i], pos_for_flags[i])
+    pygame.draw.rect(screen, (0, 0, 0), (0, 0, 600, 600))
+    while True:
+        for event in pygame.event.get():
+            if event.type == pygame.USEREVENT:
+                if event.user_type == pygame_gui.UI_BUTTON_PRESSED:
+                    if event.ui_element == exit_button:
+                        inventory_mode = False
+                        need_to_load_menu = True
+                        return
+                    if event.ui_element == pick_first_skin_button:
+                        pygame.draw.rect(screen, (0, 0, 0), (1, 200, 600, 400))
+                        if FIRST_SKIN_BOUGHT:
+                            FIRST_SKIN_BOUGHT = True
+                            buy_text = font_pick.render('Скин Установлен', True, (0, 255, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                        else:
+                            buy_text = font_pick.render('Купите, чтобы разблокировать',
+                                                        True, (255, 0, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                    if event.ui_element == pick_second_skin_button:
+                        pygame.draw.rect(screen, (0, 0, 0), (1, 200, 600, 400))
+                        if SECOND_SKIN_BOUGHT:
+                            SECOND_SKIN_BOUGHT = True
+                            buy_text = font_pick.render('Скин Установлен', True, (0, 255, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                        else:
+                            buy_text = font_pick.render('Купите, чтобы разблокировать',
+                                                        True, (255, 0, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                    if event.ui_element == pick_third_skin_button:
+                        pygame.draw.rect(screen, (0, 0, 0), (1, 200, 600, 400))
+                        if THIRD_SKIN_BOUGHT:
+                            THIRD_SKIN_BOUGHT = True
+                            buy_text = font_pick.render('Скин Установлен', True, (0, 255, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                        else:
+                            buy_text = font_pick.render('Купите, чтобы разблокировать',
+                                                        True, (255, 0, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                    if event.ui_element == pick_firth_skin_button:
+                        pygame.draw.rect(screen, (0, 0, 0), (1, 200, 600, 400))
+                        if FIRTH_SKIN_BOUGHT:
+                            FIRTH_SKIN_BOUGHT = True
+                            buy_text = font_pick.render('Скин Установлен', True, (0, 255, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                        else:
+                            buy_text = font_pick.render('Купите, чтобы разблокировать',
+                                                        True, (255, 0, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                    if event.ui_element == pick_fifth_skin_button:
+                        pygame.draw.rect(screen, (0, 0, 0), (1, 200, 600, 400))
+                        if FIFTH_SKIN_BOUGHT:
+                            FIFTH_SKIN_BOUGHT = True
+                            buy_text = font_pick.render('Скин Установлен', True, (0, 255, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                        else:
+                            buy_text = font_pick.render('Купите, чтобы разблокировать',
+                                                        True, (255, 0, 0))
+                            buy_text_place = buy_text.get_rect(center=(200, 450))
+                            screen.blit(buy_text, buy_text_place)
+                    pygame.draw.rect(screen, (0, 0, 0), (400, 0, 500, 100))
+                    pygame.display.flip()
+            if event.type == pygame.KEYDOWN:
+                shop_pressed_keys = pygame.key.get_pressed()
+                if shop_pressed_keys[pygame.K_m]:
+                    inventory_mode = False
+                    return
+            elif event.type == pygame.QUIT:
+                terminate()
+            manager.process_events(event)
+
+        manager.update(FPS)
+        manager.draw_ui(screen)
+        screen.blit(exit_image, (380, 400))
+        screen.blit(first_skin, (40, 80))
+        screen.blit(second_skin, (185, 35))
         screen.blit(third_skin, (330, 40))
         screen.blit(firth_skin, (30, 180))
         screen.blit(fifth_skin, (180, 180))
@@ -456,6 +625,7 @@ def main_game():
     all_sprites.add(main_hero)
     running = True
     pause_mode = False
+    inventory_mode = False
     shop_mode = False
     load_music()
     start = time.time()
@@ -494,12 +664,25 @@ def main_game():
                         if need_to_load_menu:
                             need_to_load_menu = False
                             load_menu()
+                if event.key == pygame.K_i:
+                    if inventory_mode:
+                        inventory_mode = False
+                    else:
+                        inventory_mode = True
+                        inventory(screen)
+                        if need_to_load_menu:
+                            need_to_load_menu = False
+                            load_menu()
         update_event(last_event, start)
         if not pause_mode:
             all_sprites.update(rect_hero.x, rect_hero.y, reverse_hero)
             all_sprites.draw(screen)
             pygame.display.flip()
         if not shop_mode:
+            all_sprites.update(rect_hero.x, rect_hero.y, reverse_hero)
+            all_sprites.draw(screen)
+            pygame.display.flip()
+        if not inventory_mode:
             all_sprites.update(rect_hero.x, rect_hero.y, reverse_hero)
             all_sprites.draw(screen)
             pygame.display.flip()
