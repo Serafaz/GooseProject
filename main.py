@@ -421,7 +421,7 @@ def inventory(screen):
     font_pick = pygame.font.SysFont(None, 20)
     array_with_flags = [FIRST_SKIN_BOUGHT, SECOND_SKIN_BOUGHT, THIRD_SKIN_BOUGHT,
                         FIRTH_SKIN_BOUGHT, FIFTH_SKIN_BOUGHT]
-    array_with_names = [first_skin, second_skin, third_skin,  firth_skin,
+    array_with_names = [first_skin, second_skin, third_skin, firth_skin,
                         fifth_skin]
     pos_for_flags = [(40, 80), (185, 35), (330, 40), (30, 180), (180, 180)]
     for i in range(len(array_with_flags)):
@@ -572,6 +572,15 @@ def pause(screen):
 
 
 def get_collide(rect_hero):
+    global reverse_hero
+    if rect_hero is not None:
+        for sprite in platforms_group:
+            if rect_hero.colliderect(sprite):
+                if reverse_hero == 1:
+                    reverse_hero = 2
+                else:
+                    reverse_hero = 1
+                return True
     return False
 
 
